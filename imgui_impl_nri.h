@@ -1,10 +1,10 @@
 #ifndef IMGUI_IMPL_NRI_H
 #define IMGUI_IMPL_NRI_H
 
-#include "NRI/NRIDescs.h"
 #ifndef IMGUI_DISABLE
 
 #include <NRI/NRI.h>
+#include <NRI/NRIDescs.h>
 
 struct ImGui_ImplNRI_InitInfo
 {
