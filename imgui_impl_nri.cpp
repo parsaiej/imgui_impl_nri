@@ -1,4 +1,11 @@
+// dear imgui: Renderer Backend for Vulkan
+// This needs to be used along with a Platform Backend (e.g. GLFW, SDL, Win32, custom..)
+
+// CHANGELOG
+// 2025-01-20: NRI: Initial commit.
+
 #include "imgui_impl_nri.h"
+#include "NRI/NRIDescs.h"
 #include <imgui.h>
 
 //-----------------------------------------------------------------------------
@@ -7,11 +14,19 @@
 
 bool ImGui_ImplNRI_CreateDeviceObjects();
 void ImGui_ImplNRI_DestroyDeviceObjects();
+void ImGui_ImplVulkan_CreatePipeline(nri::Device* device, nri::Pipeline* pipeline);
+
+// clang-format off
+struct ImGui_ImplNRI_Interface
+    : public nri::CoreInterface,
+      public nri::HelperInterface {};
+// clang-format on
 
 struct ImGui_ImplNRI_Data
 {
-    ImGui_ImplNRI_InitInfo NRIInitInfo;
-    nri::Pipeline*         Pipeline;
+    ImGui_ImplNRI_InitInfo  NRIInitInfo;
+    nri::Pipeline*          Pipeline;
+    ImGui_ImplNRI_Interface Interface;
 
     ImGui_ImplNRI_Data() { memset((void*)this, 0, sizeof(*this)); }
 };
@@ -20,7 +35,9 @@ struct ImGui_ImplNRI_Data
 // SHADERS
 //-----------------------------------------------------------------------------
 
-// TODO
+// SPIR-V
+#include "shader/header/spv/UI.vert.spv.h"
+#include "shader/header/spv/UI.frag.spv.h"
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
@@ -56,8 +73,30 @@ void ImGui_ImplNRI_Shutdown()
 
     ImGui_ImplNRI_DestroyDeviceObjects();
     io.BackendRendererName = nullptr;
-    io.BackendRendererName = nullptr;
     IM_DELETE(bd);
+}
+
+void ImGui_ImplNRI_CreatePipeline(nri::Device* device, nri::Pipeline* pipeline)
+{
+    ImGui_ImplNRI_Data* bd = ImGui_ImplNRI_GetBackendData();
+
+    auto& nri = bd->Interface;
+
+    nri::GraphicsPipelineDesc temp;
+    {
+    }
+    nri.CreateGraphicsPipeline(*device, temp, pipeline);
+}
+
+bool ImGui_ImplNRI_CreateDeviceObjects()
+{
+    ImGui_ImplNRI_Data*     bd        = ImGui_ImplNRI_GetBackendData();
+    ImGui_ImplNRI_InitInfo* init_info = &bd->NRIInitInfo;
+
+    nri::nriGetInterface(*bd->NRIInitInfo.Device, NRI_INTERFACE(nri::CoreInterface), (nri::CoreInterface*)&bd->Interface);
+    nri::nriGetInterface(*bd->NRIInitInfo.Device, NRI_INTERFACE(nri::HelperInterface), (nri::HelperInterface*)&bd->Interface);
+
+    return true;
 }
 
 void ImGui_ImplNRI_DestroyDeviceObjects() {}
